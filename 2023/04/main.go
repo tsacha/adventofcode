@@ -83,8 +83,8 @@ func part2() (solution int) {
 			}
 		}
 
+		matching_numbers := matching_numbers(winning_numbers[card_number], numbers[card_number])
 		for c := 1; c <= scratchboards[card_number]; c++ {
-			matching_numbers := matching_numbers(winning_numbers[card_number], numbers[card_number])
 			for m := card_number + 1; m <= card_number+matching_numbers; m++ {
 				scratchboards[m]++
 			}
