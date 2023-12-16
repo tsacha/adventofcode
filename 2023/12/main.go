@@ -155,5 +155,5 @@ func part2() (solution int) {
 }
 
 func main() {
-	fmt.Printf("Solution 2: %d\n", part2())
+	fmt.Printf("Solution 1: %d\n", part1())
 }
