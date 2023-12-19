@@ -10,21 +10,21 @@ import (
 )
 
 const (
-	LEFT  = 0
-	DOWN  = 1
-	RIGHT = 2
-	UP    = 3
+	Left  = 0
+	Down  = 1
+	Right = 2
+	Up    = 3
 
-	VOID         = "."
-	MIRROR_LEFT  = "/"
-	MIRROR_RIGHT = "\\"
-	SPLITTER_H   = "-"
-	SPLITTER_V   = "|"
+	Void        = "."
+	MirrorLeft  = "/"
+	MirrorRight = "\\"
+	SplitterH   = "-"
+	SplitterV   = "|"
 )
 
 type beam struct {
-	x_cursor  int
-	y_cursor  int
+	xCursor   int
+	yCursor   int
 	direction int
 }
 
@@ -34,130 +34,130 @@ type tile struct {
 }
 
 type grid struct {
-	x_size   int
-	y_size   int
+	xSize    int
+	ySize    int
 	position [][]tile
 	history  [][3]int
 }
 
 func (b *beam) left(g *grid) {
-	if b.y_cursor > 0 {
-		b.y_cursor--
-		b.direction = LEFT
-		g.piewpiew(*b)
+	if b.yCursor > 0 {
+		b.yCursor--
+		b.direction = Left
+		g.piewPiew(*b)
 	}
 }
 func (b *beam) right(g *grid) {
-	if b.y_cursor < g.y_size-1 {
-		b.y_cursor++
-		b.direction = RIGHT
-		g.piewpiew(*b)
+	if b.yCursor < g.ySize-1 {
+		b.yCursor++
+		b.direction = Right
+		g.piewPiew(*b)
 	}
 }
 func (b *beam) up(g *grid) {
-	if b.x_cursor > 0 {
-		b.x_cursor--
-		b.direction = UP
-		g.piewpiew(*b)
+	if b.xCursor > 0 {
+		b.xCursor--
+		b.direction = Up
+		g.piewPiew(*b)
 	}
 }
 func (b *beam) down(g *grid) {
-	if b.x_cursor < g.x_size-1 {
-		b.x_cursor++
-		b.direction = DOWN
-		g.piewpiew(*b)
+	if b.xCursor < g.xSize-1 {
+		b.xCursor++
+		b.direction = Down
+		g.piewPiew(*b)
 	}
 }
 
-func (b *beam) split_h(g *grid) {
+func (b *beam) splitH(g *grid) {
 	b.left(g)
 	b.right(g)
 }
 
-func (b *beam) split_v(g *grid) {
+func (b *beam) splitV(g *grid) {
 	b.up(g)
 	b.down(g)
 }
 
-func (g *grid) piewpiew(b beam) {
+func (g *grid) piewPiew(b beam) {
 	for _, h := range g.history[:len(g.history)] {
-		if b.x_cursor == h[0] && b.y_cursor == h[1] && b.direction == h[2] {
+		if b.xCursor == h[0] && b.yCursor == h[1] && b.direction == h[2] {
 			return
 		}
 	}
 
-	g.history = append(g.history, [3]int{b.x_cursor, b.y_cursor, b.direction})
-	tile := &g.position[b.x_cursor][b.y_cursor]
+	g.history = append(g.history, [3]int{b.xCursor, b.yCursor, b.direction})
+	tile := &g.position[b.xCursor][b.yCursor]
 	tile.energised = true
 
 	switch b.direction {
-	case LEFT:
+	case Left:
 		switch tile.char {
-		case VOID, SPLITTER_H:
+		case Void, SplitterH:
 			b.left(g)
-		case MIRROR_LEFT:
+		case MirrorLeft:
 			b.down(g)
-		case MIRROR_RIGHT:
+		case MirrorRight:
 			b.up(g)
-		case SPLITTER_V:
-			b.split_v(g)
+		case SplitterV:
+			b.splitV(g)
 		}
-	case UP:
+	case Up:
 		switch tile.char {
-		case VOID, SPLITTER_V:
+		case Void, SplitterV:
 			b.up(g)
-		case MIRROR_LEFT:
+		case MirrorLeft:
 			b.right(g)
-		case MIRROR_RIGHT:
+		case MirrorRight:
 			b.left(g)
-		case SPLITTER_H:
-			b.split_h(g)
+		case SplitterH:
+			b.splitH(g)
 		}
-	case RIGHT:
+	case Right:
 		switch tile.char {
-		case VOID, SPLITTER_H:
+		case Void, SplitterH:
 			b.right(g)
-		case MIRROR_LEFT:
+		case MirrorLeft:
 			b.up(g)
-		case MIRROR_RIGHT:
+		case MirrorRight:
 			b.down(g)
-		case SPLITTER_V:
-			b.split_v(g)
+		case SplitterV:
+			b.splitV(g)
 		}
-	case DOWN:
+	case Down:
 		switch tile.char {
-		case VOID, SPLITTER_V:
+		case Void, SplitterV:
 			b.down(g)
-		case MIRROR_LEFT:
+		case MirrorLeft:
 			b.left(g)
-		case MIRROR_RIGHT:
+		case MirrorRight:
 			b.right(g)
-		case SPLITTER_H:
-			b.split_h(g)
+		case SplitterH:
+			b.splitH(g)
 		}
 	}
 }
 
-func (grid grid) print() {
+func (g *grid) print() {
 	energised := color.New(color.Bold, color.BgBlue)
 	empty := color.New(color.FgRed, color.Bold)
 
-	for x := range grid.position {
+	for x := range g.position {
 		fmt.Println()
-		for _, c := range grid.position[x] {
+		for _, c := range g.position[x] {
 			if c.energised {
-				energised.Printf("%s ", c.char)
+				_, _ = energised.Printf("%s ", c.char)
 			} else {
-				empty.Printf("%s ", c.char)
+				_, _ = empty.Printf("%s ", c.char)
 			}
 		}
 	}
 	fmt.Println()
 }
 
-func (grid grid) count() (solution int) {
-	for x := range grid.position {
-		for _, c := range grid.position[x] {
+func (g *grid) count() (solution int) {
+	for x := range g.position {
+		for _, c := range g.position[x] {
 			if c.energised {
 				solution++
 			}
@@ -166,7 +166,7 @@ func (grid grid) count() (solution int) {
 	return solution
 }
 
-func import_grid(input string) (grid grid) {
+func importGrid(input string) (grid grid) {
 	for x, row := range strings.Split(strings.Trim(input, "\n"), "\n") {
 		grid.position = append(grid.position, []tile{})
 		for _, c := range strings.Split(row, "") {
@@ -176,20 +176,20 @@ func import_grid(input string) (grid grid) {
 			grid.position[x] = append(grid.position[x], tile)
 		}
 	}
-	grid.x_size = len(grid.position)
-	grid.y_size = len(grid.position[0])
+	grid.xSize = len(grid.position)
+	grid.ySize = len(grid.position[0])
 
 	return grid
 }
 
 func part1() (result int) {
 	input := string(utils.PuzzleInput(2023, 16))
-	grid := import_grid(input)
+	grid := importGrid(input)
 
-	grid.piewpiew(beam{
-		x_cursor:  0,
-		y_cursor:  0,
-		direction: RIGHT,
+	grid.piewPiew(beam{
+		xCursor:   0,
+		yCursor:   0,
+		direction: Right,
 	})
 
 	grid.print()
@@ -198,60 +198,60 @@ func part1() (result int) {
 
 func part2() (result int) {
 	input := string(utils.PuzzleInput(2023, 16))
-	input_grid := import_grid(input)
+	inputGrid := importGrid(input)
 
 	var wg sync.WaitGroup
-	for x := 0; x < input_grid.x_size; x++ {
+	for x := 0; x < inputGrid.xSize; x++ {
 		wg.Add(1)
 		go func(x int) {
 			defer wg.Done()
-			g := import_grid(input)
-			g.piewpiew(beam{
-				x_cursor:  x,
-				y_cursor:  0,
-				direction: RIGHT,
+			g := importGrid(input)
+			g.piewPiew(beam{
+				xCursor:   x,
+				yCursor:   0,
+				direction: Right,
 			})
 			result = max(g.count(), result)
 		}(x)
 	}
 
-	for x := 0; x < input_grid.x_size; x++ {
+	for x := 0; x < inputGrid.xSize; x++ {
 		wg.Add(1)
 		go func(x int) {
 			defer wg.Done()
-			g := import_grid(input)
-			g.piewpiew(beam{
-				x_cursor:  x,
-				y_cursor:  g.y_size - 1,
-				direction: LEFT,
+			g := importGrid(input)
+			g.piewPiew(beam{
+				xCursor:   x,
+				yCursor:   g.ySize - 1,
+				direction: Left,
 			})
 			result = max(g.count(), result)
 		}(x)
 	}
 
-	for y := 0; y < input_grid.y_size; y++ {
+	for y := 0; y < inputGrid.ySize; y++ {
 		wg.Add(1)
 		go func(y int) {
 			defer wg.Done()
-			g := import_grid(input)
-			g.piewpiew(beam{
-				x_cursor:  0,
-				y_cursor:  y,
-				direction: DOWN,
+			g := importGrid(input)
+			g.piewPiew(beam{
+				xCursor:   0,
+				yCursor:   y,
+				direction: Down,
 			})
 			result = max(g.count(), result)
 		}(y)
 	}
 
-	for y := 0; y < input_grid.y_size; y++ {
+	for y := 0; y < inputGrid.ySize; y++ {
 		wg.Add(1)
 		go func(y int) {
 			defer wg.Done()
-			g := import_grid(input)
-			g.piewpiew(beam{
-				x_cursor:  g.x_size - 1,
-				y_cursor:  y,
-				direction: UP,
+			g := importGrid(input)
+			g.piewPiew(beam{
+				xCursor:   g.xSize - 1,
+				yCursor:   y,
+				direction: Up,
 			})
 			result = max(g.count(), result)
 		}(y)
@@ -262,6 +262,6 @@ func part2() (result int) {
 }
 
 func main() {
-	fmt.Printf("Solution: %d\n", part2())
 
+	fmt.Printf("Solution: %d\n", part2())
 }
