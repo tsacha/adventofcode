@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/tsacha/adventofcode/utils"
@@ -78,19 +79,11 @@ func (b *beam) split_v(g *grid) {
 	b.down(g)
 }
 
-func (b *beam) stop_the_beam(g *grid) bool {
+func (g *grid) piewpiew(b beam) {
 	for _, h := range g.history[:len(g.history)] {
 		if b.x_cursor == h[0] && b.y_cursor == h[1] && b.direction == h[2] {
-			return true
+			return
 		}
-	}
-
-	return false
-}
-
-func (g *grid) piewpiew(b beam) {
-	if b.stop_the_beam(g) {
-		return
 	}
 
 	g.history = append(g.history, [3]int{b.x_cursor, b.y_cursor, b.direction})
@@ -162,15 +155,6 @@ func (grid grid) print() {
 	fmt.Println()
 }
 
-func (grid *grid) clear() {
-	grid.history = [][3]int{}
-	for x := range grid.position {
-		for y := range grid.position[x] {
-			grid.position[x][y].energised = false
-		}
-	}
-}
-
 func (grid grid) count() (solution int) {
 	for x := range grid.position {
 		for _, c := range grid.position[x] {
@@ -182,12 +166,7 @@ func (grid grid) count() (solution int) {
 	return solution
 }
 
-func part1() (result int) {
-	input := string(utils.PuzzleInput(2023, 16))
-
-	grid := grid{
-		position: [][]tile{},
-	}
+func import_grid(input string) (grid grid) {
 	for x, row := range strings.Split(strings.Trim(input, "\n"), "\n") {
 		grid.position = append(grid.position, []tile{})
 		for _, c := range strings.Split(row, "") {
@@ -199,6 +178,13 @@ func part1() (result int) {
 	}
 	grid.x_size = len(grid.position)
 	grid.y_size = len(grid.position[0])
+
+	return grid
+}
+
+func part1() (result int) {
+	input := string(utils.PuzzleInput(2023, 16))
+	grid := import_grid(input)
 
 	grid.piewpiew(beam{
 		x_cursor:  0,
@@ -212,61 +198,65 @@ func part1() (result int) {
 
 func part2() (result int) {
 	input := string(utils.PuzzleInput(2023, 16))
+	input_grid := import_grid(input)
 
-	grid := grid{
-		position: [][]tile{},
-	}
-	for x, row := range strings.Split(strings.Trim(input, "\n"), "\n") {
-		grid.position = append(grid.position, []tile{})
-		for _, c := range strings.Split(row, "") {
-			tile := tile{
-				char: c,
-			}
-			grid.position[x] = append(grid.position[x], tile)
-		}
-	}
-	grid.x_size = len(grid.position)
-	grid.y_size = len(grid.position[0])
-
-	for x := 0; x < grid.x_size; x++ {
-		grid.piewpiew(beam{
-			x_cursor:  x,
-			y_cursor:  0,
-			direction: RIGHT,
-		})
-		result = max(grid.count(), result)
-		grid.clear()
+	var wg sync.WaitGroup
+	for x := 0; x < input_grid.x_size; x++ {
+		wg.Add(1)
+		go func(x int) {
+			defer wg.Done()
+			g := import_grid(input)
+			g.piewpiew(beam{
+				x_cursor:  x,
+				y_cursor:  0,
+				direction: RIGHT,
+			})
+			result = max(g.count(), result)
+		}(x)
 	}
 
-	for x := 0; x < grid.x_size; x++ {
-		grid.piewpiew(beam{
-			x_cursor:  x,
-			y_cursor:  grid.y_size - 1,
-			direction: LEFT,
-		})
-		result = max(grid.count(), result)
-		grid.clear()
+	for x := 0; x < input_grid.x_size; x++ {
+		wg.Add(1)
+		go func(x int) {
+			defer wg.Done()
+			g := import_grid(input)
+			g.piewpiew(beam{
+				x_cursor:  x,
+				y_cursor:  g.y_size - 1,
+				direction: LEFT,
+			})
+			result = max(g.count(), result)
+		}(x)
 	}
 
-	for y := 0; y < grid.y_size; y++ {
-		grid.piewpiew(beam{
-			x_cursor:  0,
-			y_cursor:  y,
-			direction: DOWN,
-		})
-		result = max(grid.count(), result)
-		grid.clear()
+	for y := 0; y < input_grid.y_size; y++ {
+		wg.Add(1)
+		go func(y int) {
+			defer wg.Done()
+			g := import_grid(input)
+			g.piewpiew(beam{
+				x_cursor:  0,
+				y_cursor:  y,
+				direction: DOWN,
+			})
+			result = max(g.count(), result)
+		}(y)
 	}
 
-	for y := 0; y < grid.y_size; y++ {
-		grid.piewpiew(beam{
-			x_cursor:  grid.x_size - 1,
-			y_cursor:  y,
-			direction: UP,
-		})
-		result = max(grid.count(), result)
-		grid.clear()
+	for y := 0; y < input_grid.y_size; y++ {
+		wg.Add(1)
+		go func(y int) {
+			defer wg.Done()
+			g := import_grid(input)
+			g.piewpiew(beam{
+				x_cursor:  g.x_size - 1,
+				y_cursor:  y,
+				direction: UP,
+			})
+			result = max(g.count(), result)
+		}(y)
 	}
+	wg.Wait()
 
 	return result
 }
