@@ -47,6 +47,7 @@ func (b *beam) left(g *grid) {
 		g.piewPiew(*b)
 	}
 }
+
 func (b *beam) right(g *grid) {
 	if b.yCursor < g.ySize-1 {
 		b.yCursor++
@@ -54,6 +55,7 @@ func (b *beam) right(g *grid) {
 		g.piewPiew(*b)
 	}
 }
+
 func (b *beam) up(g *grid) {
 	if b.xCursor > 0 {
 		b.xCursor--
@@ -61,6 +63,7 @@ func (b *beam) up(g *grid) {
 		g.piewPiew(*b)
 	}
 }
+
 func (b *beam) down(g *grid) {
 	if b.xCursor < g.xSize-1 {
 		b.xCursor++
@@ -85,7 +88,6 @@ func (g *grid) piewPiew(b beam) {
 			return
 		}
 	}
-
 	g.history = append(g.history, [3]int{b.xCursor, b.yCursor, b.direction})
 	tile := &g.position[b.xCursor][b.yCursor]
 	tile.energised = true
@@ -262,6 +264,5 @@ func part2() (result int) {
 }
 
 func main() {
-
 	fmt.Printf("Solution: %d\n", part2())
 }
