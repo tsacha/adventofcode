@@ -91,7 +91,6 @@ func (g *grid) piewPiew(b beam) {
 	g.history = append(g.history, [3]int{b.xCursor, b.yCursor, b.direction})
 	tile := &g.position[b.xCursor][b.yCursor]
 	tile.energised = true
-
 	switch b.direction {
 	case Left:
 		switch tile.char {
