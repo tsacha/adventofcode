@@ -1,9 +1,9 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	"math"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -18,9 +18,11 @@ type vertex struct {
 
 	dist int
 	prev *vertex
+	seen bool
 
 	in bool
 }
+
 type graph []*vertex
 type grid struct {
 	vertices [][]*vertex
@@ -30,9 +32,26 @@ type grid struct {
 	ySize int
 }
 
+func (h graph) Len() int           { return len(h) }
+func (h graph) Less(i, j int) bool { return h[i].dist < h[j].dist }
+func (h graph) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *graph) Push(x any) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(*vertex))
+}
+func (h *graph) Pop() any {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
 func importGrid(input string) grid {
 	g := grid{}
 	q := graph{}
+
 	for x, row := range strings.Split(strings.Trim(input, "\n"), "\n") {
 		g.vertices = append(g.vertices, []*vertex{})
 		for y, c := range strings.Split(row, "") {
@@ -54,7 +73,7 @@ func importGrid(input string) grid {
 	return g
 }
 
-func (g *grid) getNeighbors(v *vertex) (vertices []*vertex) {
+func (g *grid) getNeighbors(v *vertex) (vertices graph) {
 	if v.x > 0 {
 		vertices = append(vertices, g.vertices[v.x-1][v.y]) // left
 	}
@@ -70,40 +89,24 @@ func (g *grid) getNeighbors(v *vertex) (vertices []*vertex) {
 	return vertices
 }
 
-func (g *grid) minVertex(q []*vertex) (mn *vertex) {
-	min := math.MaxInt
-	for _, v := range q {
-		if v.dist < min {
-			min = v.dist
-			mn = v
-		}
-	}
-	return mn
-}
-
-func (g *grid) updateWeight(v1 *vertex, v2 *vertex) {
-	if v2.dist > v1.dist+v1.v {
-		v2.dist = v1.dist + v1.v
-		v2.prev = v1
-	}
-}
-
 func (g *grid) shortestPath() int {
-	q := make(graph, len(g.graph))
-	copy(q, g.graph)
-
 	start := g.vertices[0][0]
 	start.dist = 0
-	for len(q) != 0 {
-		v1 := g.minVertex(q)
-		for n, v := range q {
-			if v == v1 {
-				q = slices.Delete(q, n, n+1)
-				break
-			}
+	q := &graph{start}
+	heap.Init(q)
+	for q.Len() > 0 {
+		c := heap.Pop(q).(*vertex)
+		if c.seen {
+			continue
 		}
-		for _, v2 := range g.getNeighbors(v1) {
-			g.updateWeight(v1, v2)
+		c.seen = true
+		for _, n := range g.getNeighbors(c) {
+			distance := c.dist + c.v
+			if distance < n.dist {
+				n.dist = distance
+				n.prev = c
+				heap.Push(q, n)
+			}
 		}
 	}
 
@@ -130,7 +133,7 @@ func (g *grid) print() {
 	for x := range g.vertices {
 		fmt.Println()
 		for _, v := range g.vertices[x] {
-			if v.in {
+			if v.in || (v.x == 0 && v.y == 0) {
 				_, _ = energised.Printf("%d", v.v)
 
 			} else {
@@ -144,12 +147,25 @@ func (g *grid) print() {
 func part0() (result int) {
 	input := string(utils.PuzzleInput(2023, 17))
 	_ = `
-123
-456
-789
+2413432311323
+3215453535623
+3255245654254
+3446585845452
+4546657867536
+1438598798454
+4457876987766
+3637877979653
+4654967986887
+4564679986453
+1224686865563
+2546548887735
+4322674655533
 `
+
 	grid := importGrid(input)
-	result = grid.shortestPath()
+	for i := 0; i < 1; i++ {
+		result = grid.shortestPath()
+	}
 	grid.print()
 	return result
 }
