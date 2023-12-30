@@ -156,6 +156,7 @@ func (m *maze) print() {
 	}
 	fmt.Println()
 }
+
 func (m *maze) solve() (solution int) {
 	x_min, y_min, x_max, y_max := 0, 0, 0, 0
 	for p := range *m {
@@ -214,7 +215,7 @@ U 2 (#7a21e3)
 func part2() (result int) {
 	input := string(utils.PuzzleInput(2023, 18))
 	_ = input
-	input = `
+	_ = `
 R 6 (#70c710)
 D 5 (#0dc571)
 L 2 (#5713f0)
@@ -232,6 +233,7 @@ U 2 (#7a21e3)
 `
 	m := drawMaze(2, input)
 	result = m.solve()
+	m.print()
 	return result
 }
 
