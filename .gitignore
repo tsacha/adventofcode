@@ -1,4 +1,25 @@
-*
-!*.go
-!*.txt
-!*/
+# General
+.DS_Store
+.env
+*.token
+input.txt
+
+# Go
+# Binaries
+*.exe
+*.test
+*.prof
+*.out
+vendor/
+go.work
+
+# Gleam
+build/
+cache/
+erl_crash.dump
+*.beam
+*.ez
+
+# Editors
+.vscode/
+.idea/
